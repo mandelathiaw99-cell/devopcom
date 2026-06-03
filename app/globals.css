@@ -1,26 +1,55 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,600&family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@300;400;700&family=Outfit:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg:        #0f1a2e;
+  --bg2:       #0a1220;
+  --bg3:       #162035;
+  --bg4:       #1c2840;
+  --white:     #e8e4dc;
+  --white2:    #c8c4bc;
+  --black:     #060d18;
+  --gold:      #d4a017;
+  --gold2:     #e8b84b;
+  --gold3:     #f5d480;
+  --gold-dim:  rgba(212,160,23,.1);
+  --blue-muted: #8a9ab5;
+  --blue-dim:   rgba(138,154,181,.15);
+
+  --grad-gold:   linear-gradient(135deg, #f5d480, #d4a017, #b8860b);
+  --grad-gold-h: linear-gradient(90deg, #f5d480, #d4a017);
+  --grad-logo:   linear-gradient(90deg, #f953c6, #7c3aed, #2563eb, #06b6d4);
+
+  --font-display: 'Cormorant Garamond', serif;
+  --font-tech:    'Orbitron', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+  --font-body:    'Outfit', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-weight: 400;
+  overflow-x: hidden;
 }
+
+::selection {
+  background: var(--gold);
+  color: var(--black);
+}
+
+::-webkit-scrollbar { width: 2px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--gold); }
