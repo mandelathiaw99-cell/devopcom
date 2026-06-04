@@ -1,5 +1,7 @@
 'use client'
 
+import { motion } from 'framer-motion'
+
 const tags = [
   'Next.js', 'Tailwind', 'Supabase', 'Stripe',
   'Sanity', 'Framer Motion', 'Vercel', 'SEO',
@@ -35,25 +37,27 @@ export default function About() {
         <div style={{ width: '24px', height: '1px', background: 'var(--gold)' }} />
         <span style={{
           fontFamily: "'JetBrains Mono', monospace",
-          fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase',
-          color: 'var(--gold)',
+          fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)',
         }}>04 — À propos</span>
       </div>
 
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '52px',
-        alignItems: 'start',
+        gap: '52px', alignItems: 'start',
       }}>
 
         {/* Gauche */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0, x: -40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
           <h2 style={{
             fontFamily: "'Cormorant Garamond', serif",
             fontSize: 'clamp(44px, 5vw, 68px)', fontWeight: 300,
-            lineHeight: .92, marginBottom: '24px', letterSpacing: '-1px',
-            color: 'var(--white)',
+            lineHeight: .92, marginBottom: '24px', letterSpacing: '-1px', color: 'var(--white)',
           }}>
             Pas une agence.<br />
             Un <em style={{ fontStyle: 'italic', color: 'var(--gold)', fontWeight: 600 }}>partenaire.</em>
@@ -67,41 +71,52 @@ export default function About() {
           </p>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '28px' }}>
-            {tags.map(tag => (
-              <span key={tag} style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase',
-                padding: '5px 12px',
-                border: '1px solid rgba(212,160,23,.15)',
-                color: 'var(--blue-muted)',
-              }}>{tag}</span>
+            {tags.map((tag, i) => (
+              <motion.span
+                key={tag}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+                whileHover={{ borderColor: 'rgba(212,160,23,.5)', color: 'var(--gold)' }}
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase',
+                  padding: '5px 12px',
+                  border: '1px solid rgba(212,160,23,.15)',
+                  color: 'var(--blue-muted)',
+                  cursor: 'default',
+                }}>{tag}</motion.span>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Droite — Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          {cards.map(card => (
-            <div key={card.title} style={{
-              gridColumn: card.full ? 'span 2' : 'span 1',
-              background: card.full
-                ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
-                : 'var(--bg3)',
-              padding: '28px 24px',
-              border: card.full ? 'none' : '1px solid rgba(212,160,23,.08)',
-              transition: 'border-color .3s, box-shadow .3s',
-            }}
-              onMouseEnter={e => {
-                if (!card.full) {
-                  e.currentTarget.style.borderColor = 'rgba(212,160,23,.25)'
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(212,160,23,.07)'
-                }
-              }}
-              onMouseLeave={e => {
-                if (!card.full) {
-                  e.currentTarget.style.borderColor = 'rgba(212,160,23,.08)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}
+        >
+          {cards.map((card, i) => (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
+              whileHover={!card.full ? {
+                borderColor: 'rgba(212,160,23,.25)',
+                boxShadow: '0 8px 32px rgba(212,160,23,.07)',
+              } : {}}
+              style={{
+                gridColumn: card.full ? 'span 2' : 'span 1',
+                background: card.full
+                  ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
+                  : 'var(--bg3)',
+                padding: '28px 24px',
+                border: card.full ? 'none' : '1px solid rgba(212,160,23,.08)',
               }}
             >
               <div style={{
@@ -115,9 +130,9 @@ export default function About() {
                 color: card.full ? 'rgba(6,13,24,.7)' : 'var(--blue-muted)',
                 lineHeight: 1.6,
               }}>{card.desc}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   )
