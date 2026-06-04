@@ -139,6 +139,7 @@ export default function Hero() {
           </p>
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Bouton 1 — Or */}
             <Link href="#packs" style={{
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 600, fontSize: 'clamp(12px, 2vw, 14px)',
@@ -151,6 +152,8 @@ export default function Hero() {
             }}>
               Voir les offres →
             </Link>
+
+            {/* Bouton 2 — Violet */}
             <Link href="/devis" style={{
               fontFamily: "'Outfit', sans-serif",
               fontWeight: 600, fontSize: 'clamp(12px, 2vw, 14px)',
@@ -163,21 +166,26 @@ export default function Hero() {
             }}>
               Devis gratuit →
             </Link>
+
+            {/* Bouton 3 — Cyan */}
             <Link href="#services" style={{
-              fontFamily: "'JetBrains Mono', monospace",
-              fontSize: 'clamp(9px, 1.5vw, 10px)', letterSpacing: '2px', textTransform: 'uppercase',
-              color: 'var(--blue-muted)', textDecoration: 'none',
-              padding: 'clamp(10px, 2vw, 15px) clamp(16px, 3vw, 28px)',
-              border: '1px solid rgba(212,160,23,.2)',
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 600, fontSize: 'clamp(12px, 2vw, 14px)',
+              color: 'var(--white)', textDecoration: 'none',
+              padding: 'clamp(12px, 2vw, 17px) clamp(24px, 4vw, 40px)',
+              background: 'linear-gradient(135deg, #06b6d4, #0284c7, #1d4ed8)',
+              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
+              boxShadow: '0 8px 32px rgba(6,182,212,.2)',
+              display: 'inline-block',
             }}>
-              Nos services
+              Nos services →
             </Link>
           </div>
         </div>
       </div>
 
       {/* Stats bar */}
-      <div className="hero-stats" style={{
+      <div style={{
         display: 'flex',
         borderTop: '1px solid rgba(212,160,23,.08)',
         overflowX: 'auto',
