@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
     await resend.emails.send({
       from: 'DevopCom <onboarding@resend.dev>',
-      to: 'thiawmandela@gmail.com',
+      to: 'mandelathiaw99@gmail.com',
       subject: `🔥 Nouveau devis — Pack ${pack} — ${name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
