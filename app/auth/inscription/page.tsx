@@ -44,7 +44,7 @@ export default function Inscription() {
         company: company,
         role: 'client',
       })
-      router.push('/dashboard')
+      router.push('/onboarding')
     }
   }
 
