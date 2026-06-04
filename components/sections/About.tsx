@@ -31,7 +31,6 @@ export default function About() {
       borderTop: '1px solid rgba(212,160,23,.08)',
     }}>
 
-      {/* Label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
         <div style={{ width: '24px', height: '1px', background: 'var(--gold)' }} />
         <span style={{
@@ -41,7 +40,12 @@ export default function About() {
         }}>04 — À propos</span>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '72px', alignItems: 'center' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '52px',
+        alignItems: 'start',
+      }}>
 
         {/* Gauche */}
         <div>
@@ -62,7 +66,6 @@ export default function About() {
             Basé à Bordeaux, actif partout. On travaille avec des associations, institutions, PME et startups qui veulent un digital à leur hauteur.
           </p>
 
-          {/* Tags */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '28px' }}>
             {tags.map(tag => (
               <span key={tag} style={{

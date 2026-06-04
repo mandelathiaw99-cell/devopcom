@@ -27,7 +27,6 @@ export default function Process() {
   return (
     <section style={{ padding: '112px 56px', background: 'var(--bg)' }}>
 
-      {/* Label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
         <div style={{ width: '24px', height: '1px', background: 'var(--gold)' }} />
         <span style={{
@@ -37,7 +36,6 @@ export default function Process() {
         }}>03 — Process</span>
       </div>
 
-      {/* Titre */}
       <h2 style={{
         fontFamily: "'Cormorant Garamond', serif",
         fontSize: 'clamp(44px, 6vw, 80px)', fontWeight: 300,
@@ -48,10 +46,11 @@ export default function Process() {
         <em style={{ fontStyle: 'italic', color: 'var(--gold)', fontWeight: 600 }}>Efficace.</em>
       </h2>
 
-      {/* Grille */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '1px', background: 'rgba(212,160,23,.06)',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '1px',
+        background: 'rgba(212,160,23,.06)',
       }}>
         {steps.map((step) => (
           <div key={step.num}
@@ -63,7 +62,6 @@ export default function Process() {
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg3)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg2)')}
           >
-            {/* Numéro décoratif */}
             <div style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '96px', fontWeight: 600,
@@ -72,21 +70,18 @@ export default function Process() {
               lineHeight: 1, pointerEvents: 'none',
             }}>{step.num}</div>
 
-            {/* Barre */}
             <div style={{
               width: '32px', height: '2px',
               background: 'rgba(212,160,23,.2)',
               marginBottom: '28px',
             }} />
 
-            {/* Titre */}
             <h3 style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '22px', fontWeight: 600,
               color: 'var(--gold)', marginBottom: '12px',
             }}>{step.title}</h3>
 
-            {/* Description */}
             <p style={{
               fontSize: '13px', color: 'var(--blue-muted)', lineHeight: 1.7,
             }}>{step.desc}</p>

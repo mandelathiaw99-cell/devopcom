@@ -23,7 +23,6 @@ export default function Testimonials() {
   return (
     <section style={{ padding: '112px 56px', background: 'var(--bg2)' }}>
 
-      {/* Label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
         <div style={{ width: '24px', height: '1px', background: 'var(--gold)' }} />
         <span style={{
@@ -33,7 +32,6 @@ export default function Testimonials() {
         }}>05 — Ils nous font confiance</span>
       </div>
 
-      {/* Titre */}
       <h2 style={{
         fontFamily: "'Cormorant Garamond', serif",
         fontSize: 'clamp(44px, 6vw, 80px)', fontWeight: 300,
@@ -43,8 +41,11 @@ export default function Testimonials() {
         Ce qu'ils <em style={{ fontStyle: 'italic', color: 'var(--gold)', fontWeight: 600 }}>disent.</em>
       </h2>
 
-      {/* Grille */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '14px',
+      }}>
         {testimonials.map((t) => (
           <div key={t.name} style={{
             background: 'var(--bg3)', padding: '36px 30px',
@@ -52,7 +53,6 @@ export default function Testimonials() {
             position: 'relative', overflow: 'hidden',
             borderTop: '2px solid var(--gold)',
           }}>
-            {/* Guillemet */}
             <div style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '56px', fontWeight: 600,
@@ -60,14 +60,12 @@ export default function Testimonials() {
               marginBottom: '16px', opacity: .4,
             }}>"</div>
 
-            {/* Texte */}
             <p style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '16px', color: 'var(--white2)',
               lineHeight: 1.7, fontStyle: 'italic', marginBottom: '22px',
             }}>{t.quote}</p>
 
-            {/* Auteur */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{
                 width: '36px', height: '36px', borderRadius: '50%',
@@ -75,6 +73,7 @@ export default function Testimonials() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: "'Cormorant Garamond', serif",
                 fontSize: '18px', fontWeight: 600, color: 'var(--black)',
+                flexShrink: 0,
               }}>{t.initial}</div>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--white)' }}>{t.name}</div>

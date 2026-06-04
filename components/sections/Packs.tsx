@@ -66,7 +66,6 @@ export default function Packs() {
   return (
     <section id="packs" style={{ padding: '112px 56px', background: 'var(--bg2)' }}>
 
-      {/* Label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
         <div style={{ width: '24px', height: '1px', background: 'var(--gold)' }} />
         <span style={{
@@ -76,8 +75,9 @@ export default function Packs() {
         }}>02 — Tarifs</span>
       </div>
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '52px' }}>
+      <div style={{
+        display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '52px',
+      }}>
         <h2 style={{
           fontFamily: "'Cormorant Garamond', serif",
           fontSize: 'clamp(44px, 6vw, 80px)', fontWeight: 300,
@@ -89,15 +89,18 @@ export default function Packs() {
         <div style={{
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
-          color: 'var(--blue-muted)', maxWidth: '260px', lineHeight: 1.8,
+          color: 'var(--blue-muted)', maxWidth: '320px', lineHeight: 1.8,
           borderLeft: '2px solid var(--gold)', paddingLeft: '14px',
         }}>
           Paiement en 2 ou 3 fois disponible. 50% à la commande, 50% à la livraison.
         </div>
       </div>
 
-      {/* Grille */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gap: '12px',
+      }}>
         {packs.map((pack) => (
           <div key={pack.name}
             style={{
@@ -184,7 +187,6 @@ export default function Packs() {
         ))}
       </div>
 
-      {/* Note paiement */}
       <div style={{
         marginTop: '24px', padding: '18px 22px',
         background: 'rgba(212,160,23,.06)',
