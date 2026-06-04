@@ -16,7 +16,7 @@ export default function Navbar() {
   const links = [
     { label: 'Services', href: '#services' },
     { label: 'Tarifs', href: '#packs' },
-    { label: 'Dashboard', href: '#dashboard' },
+    { label: 'Devis', href: '/devis' },
     { label: 'À propos', href: '#about' },
   ]
 
@@ -74,13 +74,13 @@ export default function Navbar() {
             color: 'var(--blue-muted)', textDecoration: 'none', padding: '8px 18px',
             border: '1px solid rgba(212,160,23,.2)',
           }}>Se connecter</Link>
-          <Link href="#contact" style={{
+          <Link href="/devis" style={{
             fontFamily: "'Outfit', sans-serif",
             fontWeight: 600, fontSize: '12px',
             color: 'var(--black)', textDecoration: 'none', padding: '10px 24px',
             background: 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)',
             clipPath: 'polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))',
-          }}>Démarrer →</Link>
+          }}>Devis gratuit →</Link>
         </div>
 
         {/* Hamburger mobile */}
@@ -127,7 +127,7 @@ export default function Navbar() {
               padding: '12px 0',
               borderBottom: '1px solid rgba(212,160,23,.08)',
             }}>Se connecter</Link>
-          <Link href="#contact"
+          <Link href="/devis"
             onClick={() => setMenuOpen(false)}
             style={{
               fontFamily: "'Outfit', sans-serif",
@@ -135,7 +135,7 @@ export default function Navbar() {
               color: 'var(--black)', textDecoration: 'none',
               padding: '14px', textAlign: 'center',
               background: 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)',
-            }}>Démarrer →</Link>
+            }}>Devis gratuit →</Link>
         </div>
       )}
 
