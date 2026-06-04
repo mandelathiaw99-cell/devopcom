@@ -49,7 +49,6 @@ export default function Services() {
   return (
     <section id="services" style={{ padding: '112px 56px', background: 'var(--bg)' }}>
 
-      {/* Label */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
         <div style={{ width: '24px', height: '1px', background: 'var(--gold)' }} />
         <span style={{
@@ -59,7 +58,6 @@ export default function Services() {
         }}>01 — Services</span>
       </div>
 
-      {/* Titre */}
       <h2 style={{
         fontFamily: "'Cormorant Garamond', serif",
         fontSize: 'clamp(44px, 6vw, 80px)', fontWeight: 300,
@@ -69,10 +67,11 @@ export default function Services() {
         Ce qu'on fait <em style={{ fontStyle: 'italic', color: 'var(--gold)', fontWeight: 600 }}>vraiment.</em>
       </h2>
 
-      {/* Grille */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '1px', background: 'rgba(212,160,23,.06)',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1px',
+        background: 'rgba(212,160,23,.06)',
       }}>
         {services.map((svc) => (
           <div key={svc.num} style={{
@@ -83,7 +82,6 @@ export default function Services() {
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg3)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'var(--bg2)')}
           >
-            {/* Numéro décoratif */}
             <div style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '80px', fontWeight: 600,
@@ -92,7 +90,6 @@ export default function Services() {
               lineHeight: 1, pointerEvents: 'none',
             }}>{svc.num}</div>
 
-            {/* Icône */}
             <div style={{
               width: '44px', height: '44px', marginBottom: '24px',
               background: 'rgba(212,160,23,.08)',
@@ -101,20 +98,17 @@ export default function Services() {
               fontSize: '18px',
             }}>{svc.icon}</div>
 
-            {/* Titre */}
             <h3 style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: '24px', fontWeight: 600,
               color: 'var(--gold)', marginBottom: '14px', lineHeight: 1.1,
             }}>{svc.title}</h3>
 
-            {/* Description */}
             <p style={{
               fontSize: '13px', color: 'var(--blue-muted)',
               lineHeight: 1.8, marginBottom: '24px',
             }}>{svc.desc}</p>
 
-            {/* Tags */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
               {svc.tags.map(tag => (
                 <span key={tag} style={{
