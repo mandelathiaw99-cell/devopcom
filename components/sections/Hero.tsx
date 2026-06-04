@@ -42,7 +42,7 @@ export default function Hero() {
         maskImage: 'radial-gradient(ellipse 80% 80% at 50% 40%, black 20%, transparent 100%)',
       }} />
 
-      {/* Ornements coins — cachés mobile */}
+      {/* Ornements coins */}
       <div className="hero-orn" style={{
         position: 'absolute', top: '88px', left: '56px',
         width: '80px', height: '80px',
@@ -150,6 +150,18 @@ export default function Hero() {
               display: 'inline-block',
             }}>
               Voir les offres →
+            </Link>
+            <Link href="/devis" style={{
+              fontFamily: "'Outfit', sans-serif",
+              fontWeight: 600, fontSize: 'clamp(12px, 2vw, 14px)',
+              color: 'var(--white)', textDecoration: 'none',
+              padding: 'clamp(12px, 2vw, 17px) clamp(24px, 4vw, 40px)',
+              background: 'linear-gradient(135deg, #f953c6, #7c3aed, #2563eb)',
+              clipPath: 'polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))',
+              boxShadow: '0 8px 32px rgba(124,58,237,.2)',
+              display: 'inline-block',
+            }}>
+              Devis gratuit →
             </Link>
             <Link href="#services" style={{
               fontFamily: "'JetBrains Mono', monospace",
