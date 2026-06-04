@@ -214,7 +214,7 @@ export default function Parametres() {
                 padding: '12px 16px', marginBottom: '20px',
                 background: 'rgba(34,197,94,.1)',
                 border: '1px solid rgba(34,197,94,.2)',
-                color: '#22c55e', fontSize: '13px',
+                color: '#22c55e',
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase',
               }}>✓ Profil mis à jour avec succès</div>
