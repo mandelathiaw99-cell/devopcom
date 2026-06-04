@@ -6,7 +6,6 @@ export async function POST(request: Request) {
     const resend = new Resend(process.env.RESEND_API_KEY)
     const { name, email, message, pack, answers } = await request.json()
 
-    // Email à toi (notification)
     await resend.emails.send({
       from: 'DevopCom <onboarding@resend.dev>',
       to: 'thiawmandela@gmail.com',
@@ -24,7 +23,7 @@ export async function POST(request: Request) {
                 <td style="padding: 10px; color: #1a1610;">${name}</td>
               </tr>
               <tr style="border-bottom: 1px solid #ddd;">
-                <td style="padding: 10px; font-weight: bold; color: #666;">Email</td>
+                <td style="padding: 10px; font-weight: bold; color: #666;">Email client</td>
                 <td style="padding: 10px; color: #1a1610;">${email}</td>
               </tr>
               <tr style="border-bottom: 1px solid #ddd;">
@@ -57,40 +56,6 @@ export async function POST(request: Request) {
                 Répondre à ${name} →
               </a>
             </div>
-          </div>
-        </div>
-      `,
-    })
-
-    // Email de confirmation au client
-    await resend.emails.send({
-      from: 'DevopCom <onboarding@resend.dev>',
-      to: email,
-      subject: `✦ Votre demande de devis DevopCom — Pack ${pack}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: #0a1220; padding: 32px; border-bottom: 3px solid #d4a017;">
-            <h1 style="color: #d4a017; font-size: 24px; margin: 0;">DevopCom</h1>
-            <p style="color: #8a9ab5; margin: 8px 0 0;">Votre digital, de A à Z.</p>
-          </div>
-          <div style="background: #f5f5f5; padding: 32px;">
-            <h2 style="color: #1a1610;">Bonjour ${name},</h2>
-            <p style="color: #444; line-height: 1.7; margin-top: 12px;">
-              Merci pour votre demande de devis ! J'ai bien reçu votre projet et vous recontacterai sous <strong>48h</strong>.
-            </p>
-            <div style="background: #0a1220; padding: 24px; margin: 24px 0; border-left: 4px solid #d4a017;">
-              <p style="color: #d4a017; font-weight: bold; margin: 0 0 8px;">Pack recommandé : ${pack}</p>
-              <p style="color: #8a9ab5; margin: 0; font-size: 14px;">Sur la base de vos réponses au questionnaire</p>
-            </div>
-            <div style="margin-top: 24px; text-align: center;">
-              <a href="https://devopcom.vercel.app"
-                style="background: #d4a017; color: #000; padding: 14px 32px; text-decoration: none; font-weight: bold; display: inline-block;">
-                Visiter DevopCom →
-              </a>
-            </div>
-          </div>
-          <div style="background: #0a1220; padding: 20px; text-align: center;">
-            <p style="color: #8a9ab5; font-size: 12px; margin: 0;">© 2026 DevopCom — Bordeaux, France</p>
           </div>
         </div>
       `,
