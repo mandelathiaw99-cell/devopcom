@@ -53,3 +53,91 @@ body {
 ::-webkit-scrollbar { width: 2px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--gold); }
+
+/* ── RESPONSIVE MOBILE ── */
+@media (max-width: 768px) {
+
+  section {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  /* Services */
+  .svc-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Packs */
+  .packs-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .packs-head {
+    flex-direction: column !important;
+    gap: 24px !important;
+  }
+
+  /* Process */
+  .proc-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* About */
+  .about-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Testimonials */
+  .testi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Dashboard */
+  .dash-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Footer */
+  .footer-top {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* CTA */
+  .cta-acts {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  /* Hero bottom */
+  .hero-bottom {
+    flex-direction: column !important;
+  }
+
+  /* Packs head */
+  .packs-head {
+    flex-direction: column !important;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .proc-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .footer-top {
+    grid-template-columns: 1fr !important;
+  }
+
+  .testi-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dash-kpis {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .dash-cols {
+    grid-template-columns: 1fr !important;
+  }
+}
