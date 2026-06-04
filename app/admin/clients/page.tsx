@@ -138,12 +138,12 @@ export default function AdminClients() {
         {/* Liste clients */}
         <div style={{ background: 'var(--bg2)', border: '1px solid rgba(212,160,23,.08)', overflow: 'hidden' }}>
           <div style={{
-            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto',
             padding: '14px 24px',
             borderBottom: '1px solid rgba(212,160,23,.08)',
             background: 'rgba(212,160,23,.04)',
           }}>
-            {['Nom', 'Email', 'Entreprise', 'Inscrit le'].map(h => (
+            {['Nom', 'Email', 'Entreprise', 'Inscrit le', ''].map(h => (
               <div key={h} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', opacity: .7 }}>{h}</div>
             ))}
           </div>
@@ -157,11 +157,10 @@ export default function AdminClients() {
           ) : (
             filtered.map((client, i) => (
               <div key={client.id} style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto',
                 padding: '16px 24px',
                 borderBottom: i < filtered.length - 1 ? '1px solid rgba(212,160,23,.05)' : 'none',
                 alignItems: 'center',
-                transition: 'background .2s',
               }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,160,23,.02)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -172,6 +171,12 @@ export default function AdminClients() {
                 <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--blue-muted)' }}>
                   {new Date(client.created_at).toLocaleDateString('fr-FR')}
                 </div>
+                <Link href={`/admin/clients/${client.id}`} style={{
+                  fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', letterSpacing: '1px',
+                  padding: '6px 14px', border: '1px solid rgba(212,160,23,.2)',
+                  color: 'var(--gold)', textDecoration: 'none', textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                }}>Voir →</Link>
               </div>
             ))
           )}
