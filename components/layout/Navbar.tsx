@@ -16,6 +16,7 @@ export default function Navbar() {
   const links = [
     { label: 'Services', href: '#services' },
     { label: 'Tarifs', href: '#packs' },
+    { label: 'Portfolio', href: '/portfolio' },
     { label: 'Devis', href: '/devis' },
     { label: 'À propos', href: '#about' },
   ]
