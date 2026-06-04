@@ -11,7 +11,6 @@ export default function Hero() {
   useEffect(() => {
     setMounted(true)
 
-    // Compteurs animés
     const duration = 2000
     const steps = 60
     const interval = duration / steps
@@ -37,7 +36,7 @@ export default function Hero() {
     hidden: { opacity: 0, y: 40 },
     visible: (i: number) => ({
       opacity: 1, y: 0,
-      transition: { delay: i * 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+      transition: { delay: i * 0.15, duration: 0.7, ease: 'easeOut' as const }
     })
   }
 
@@ -139,12 +138,7 @@ export default function Hero() {
         >
           <span style={{ color: 'var(--white)', display: 'block' }}>VOTRE</span>
           <span style={{ color: 'transparent', WebkitTextStroke: '1px rgba(232,228,220,.12)', display: 'block' }}>DIGITAL</span>
-          <motion.span
-            initial={{ backgroundPosition: '200% center' }}
-            animate={{ backgroundPosition: '0% center' }}
-            transition={{ delay: 0.8, duration: 1.5 }}
-            style={{ color: 'var(--gold)', fontStyle: 'italic', fontWeight: 600 }}
-          >DE A À Z.</motion.span>
+          <span style={{ color: 'var(--gold)', fontStyle: 'italic', fontWeight: 600 }}>DE A À Z.</span>
         </motion.h1>
 
         {/* Divider */}
@@ -191,7 +185,7 @@ export default function Hero() {
                 key={btn.href}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 + i * 0.1, duration: 0.5 }}
+                transition={{ delay: 0.8 + i * 0.1, duration: 0.5, ease: 'easeOut' }}
                 whileHover={{ scale: 1.05, boxShadow: `0 12px 40px ${btn.shadow}` }}
                 whileTap={{ scale: 0.97 }}
               >
