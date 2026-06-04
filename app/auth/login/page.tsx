@@ -26,7 +26,20 @@ export default function Login() {
       setError('Email ou mot de passe incorrect')
       setLoading(false)
     } else {
-      router.push('/dashboard')
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single()
+
+        if (profile?.role === 'admin') {
+          router.push('/admin')
+        } else {
+          router.push('/dashboard')
+        }
+      }
     }
   }
 
@@ -40,7 +53,6 @@ export default function Login() {
       padding: '20px',
     }}>
 
-      {/* Card */}
       <div style={{
         width: '100%',
         maxWidth: '440px',
