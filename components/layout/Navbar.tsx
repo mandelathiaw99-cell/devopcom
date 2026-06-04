@@ -17,8 +17,8 @@ export default function Navbar() {
     { label: 'Services', href: '#services' },
     { label: 'Tarifs', href: '#packs' },
     { label: 'Portfolio', href: '/portfolio' },
+    { label: 'Blog', href: '/blog' },
     { label: 'Devis', href: '/devis' },
-    { label: 'À propos', href: '#about' },
   ]
 
   return (
@@ -52,7 +52,7 @@ export default function Navbar() {
 
         {/* Liens desktop */}
         <ul style={{
-          display: 'flex', gap: '36px', listStyle: 'none',
+          display: 'flex', gap: '28px', listStyle: 'none',
           position: 'absolute', left: '50%', transform: 'translateX(-50%)',
           margin: 0, padding: 0,
         }} className="nav-desktop">
