@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -42,6 +42,26 @@ export default function AdminMessages() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const fetchMessages = useCallback(async (clientId: string) => {
+    console.log('Fetching messages for client:', clientId)
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(
+        `and(sender_id.eq.${clientId},receiver_id.eq.${ADMIN_ID}),and(sender_id.eq.${ADMIN_ID},receiver_id.eq.${clientId})`
+      )
+      .order('created_at', { ascending: true })
+
+    console.log('Messages fetched:', data, 'Error:', error)
+
+    if (error) {
+      console.error('Erreur fetch messages:', error)
+      return
+    }
+
+    setMessages(data || [])
+  }, [])
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -72,30 +92,11 @@ export default function AdminMessages() {
     fetchData()
   }, [router])
 
-  const fetchMessages = async (clientId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('*')
-      .or(
-        `and(sender_id.eq.${clientId},receiver_id.eq.${ADMIN_ID}),and(sender_id.eq.${ADMIN_ID},receiver_id.eq.${clientId})`
-      )
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      console.error('Erreur fetch messages:', error)
-      return
-    }
-
-    setMessages(data || [])
-  }
-
   useEffect(() => {
     if (!selectedClient) return
 
-    // Fetch immédiat
     fetchMessages(selectedClient.id)
 
-    // Marquer comme lus
     supabase
       .from('messages')
       .update({ read: true })
@@ -103,7 +104,6 @@ export default function AdminMessages() {
       .eq('receiver_id', ADMIN_ID)
       .eq('read', false)
 
-    // Polling toutes les 3 secondes
     if (pollingRef.current) clearInterval(pollingRef.current)
     pollingRef.current = setInterval(() => {
       const current = selectedClientRef.current
@@ -113,7 +113,7 @@ export default function AdminMessages() {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
     }
-  }, [selectedClient])
+  }, [selectedClient, fetchMessages])
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedClient) return
@@ -130,7 +130,6 @@ export default function AdminMessages() {
 
     setNewMessage('')
     setSending(false)
-    // Refresh immédiat après envoi
     fetchMessages(selectedClient.id)
   }
 
