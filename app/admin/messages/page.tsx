@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -30,19 +30,23 @@ export default function AdminMessages() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user || user.id !== ADMIN_ID) { router.push('/'); return }
 
-      // Récupérer tous les clients qui ont envoyé des messages
-      const { data: msgs } = await supabase
+      const { data: allMessages } = await supabase
         .from('messages')
-        .select('sender_id, receiver_id')
+        .select('sender_id')
         .neq('sender_id', ADMIN_ID)
 
-      const clientIds = [...new Set((msgs || []).map(m => m.sender_id))]
+      const clientIds = [...new Set((allMessages || []).map(m => m.sender_id))]
 
       if (clientIds.length > 0) {
         const { data: profiles } = await supabase
@@ -64,6 +68,8 @@ export default function AdminMessages() {
   useEffect(() => {
     if (!selectedClient) return
 
+    let channel: ReturnType<typeof supabase.channel>
+
     const fetchMessages = async () => {
       const { data } = await supabase
         .from('messages')
@@ -75,7 +81,6 @@ export default function AdminMessages() {
 
       setMessages(data || [])
 
-      // Marquer comme lus
       await supabase
         .from('messages')
         .update({ read: true })
@@ -86,18 +91,27 @@ export default function AdminMessages() {
 
     fetchMessages()
 
-    const channel = supabase
-      .channel(`admin-messages-${selectedClient.id}`)
+    channel = supabase
+      .channel(`admin-conv-${selectedClient.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
+        filter: `receiver_id=eq.${ADMIN_ID}`,
       }, (payload) => {
         const msg = payload.new as Message
-        if (
-          (msg.sender_id === selectedClient.id && msg.receiver_id === ADMIN_ID) ||
-          (msg.sender_id === ADMIN_ID && msg.receiver_id === selectedClient.id)
-        ) {
+        if (msg.sender_id === selectedClient.id) {
+          setMessages(prev => [...prev, msg])
+        }
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `sender_id=eq.${ADMIN_ID}`,
+      }, (payload) => {
+        const msg = payload.new as Message
+        if (msg.receiver_id === selectedClient.id) {
           setMessages(prev => [...prev, msg])
         }
       })
@@ -143,7 +157,7 @@ export default function AdminMessages() {
             background: 'linear-gradient(90deg, #f953c6, #7c3aed, #2563eb, #06b6d4)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1,
           }}>DEVOP</div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '7px', letterSpacing: '4px', color: 'var(--gold)', textTransform: 'uppercase', opacity: .7 }}>C · O · M</div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '7px', letterSpacing: '4px', color: 'var(--gold)', textTransform: 'uppercase', opacity: .7 }}>C · O · M · ADMIN</div>
         </div>
         <nav style={{ flex: 1, padding: '16px 0' }}>
           {[
@@ -239,7 +253,6 @@ export default function AdminMessages() {
                 flex: 1, background: 'var(--bg2)',
                 border: '1px solid rgba(212,160,23,.08)',
                 display: 'flex', flexDirection: 'column',
-                minHeight: '400px',
               }}>
                 <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {messages.length === 0 ? (
@@ -252,6 +265,7 @@ export default function AdminMessages() {
                     messages.map(msg => (
                       <div key={msg.id} style={{
                         display: 'flex',
+                        // Admin à droite, client à gauche
                         justifyContent: msg.sender_id === ADMIN_ID ? 'flex-end' : 'flex-start',
                       }}>
                         <div style={{
@@ -272,12 +286,14 @@ export default function AdminMessages() {
                             color: msg.sender_id === ADMIN_ID ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
                             marginTop: '6px',
                           }}>
+                            {msg.sender_id !== ADMIN_ID && <span style={{ marginRight: '6px', color: 'var(--gold)' }}>Client</span>}
                             {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
                       </div>
                     ))
                   )}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 <div style={{
