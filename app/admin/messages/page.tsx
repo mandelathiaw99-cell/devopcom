@@ -31,6 +31,11 @@ export default function AdminMessages() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const selectedClientRef = useRef<Client | null>(null)
+
+  useEffect(() => {
+    selectedClientRef.current = selectedClient
+  }, [selectedClient])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -46,7 +51,7 @@ export default function AdminMessages() {
         .select('sender_id')
         .neq('sender_id', ADMIN_ID)
 
-      const clientIds = [...new Set((allMessages || []).map(m => m.sender_id))]
+      const clientIds = [...new Set((allMessages || []).map((m: { sender_id: string }) => m.sender_id))]
 
       if (clientIds.length > 0) {
         const { data: profiles } = await supabase
@@ -57,6 +62,7 @@ export default function AdminMessages() {
         setClients(profiles || [])
         if (profiles && profiles.length > 0) {
           setSelectedClient(profiles[0])
+          selectedClientRef.current = profiles[0]
         }
       }
 
@@ -67,8 +73,6 @@ export default function AdminMessages() {
 
   useEffect(() => {
     if (!selectedClient) return
-
-    let channel: ReturnType<typeof supabase.channel>
 
     const fetchMessages = async () => {
       const { data } = await supabase
@@ -91,28 +95,27 @@ export default function AdminMessages() {
 
     fetchMessages()
 
-    channel = supabase
+    // Realtime sans filter — on filtre manuellement dans le callback
+    const channel = supabase
       .channel(`admin-conv-${selectedClient.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
-        filter: `receiver_id=eq.${ADMIN_ID}`,
       }, (payload) => {
         const msg = payload.new as Message
-        if (msg.sender_id === selectedClient.id) {
-          setMessages(prev => [...prev, msg])
-        }
-      })
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `sender_id=eq.${ADMIN_ID}`,
-      }, (payload) => {
-        const msg = payload.new as Message
-        if (msg.receiver_id === selectedClient.id) {
-          setMessages(prev => [...prev, msg])
+        const currentClient = selectedClientRef.current
+        if (!currentClient) return
+
+        const isClientToAdmin = msg.sender_id === currentClient.id && msg.receiver_id === ADMIN_ID
+        const isAdminToClient = msg.sender_id === ADMIN_ID && msg.receiver_id === currentClient.id
+
+        if (isClientToAdmin || isAdminToClient) {
+          setMessages(prev => {
+            // Éviter les doublons
+            if (prev.find(m => m.id === msg.id)) return prev
+            return [...prev, msg]
+          })
         }
       })
       .subscribe()
@@ -124,12 +127,14 @@ export default function AdminMessages() {
     if (!newMessage.trim() || !selectedClient) return
     setSending(true)
 
-    await supabase.from('messages').insert({
+    const { error } = await supabase.from('messages').insert({
       sender_id: ADMIN_ID,
       receiver_id: selectedClient.id,
       content: newMessage,
       read: false,
     })
+
+    if (error) console.error('Erreur envoi:', error)
 
     setNewMessage('')
     setSending(false)
@@ -262,36 +267,46 @@ export default function AdminMessages() {
                       </div>
                     </div>
                   ) : (
-                    messages.map(msg => (
-                      <div key={msg.id} style={{
-                        display: 'flex',
-                        // Admin à droite, client à gauche
-                        justifyContent: msg.sender_id === ADMIN_ID ? 'flex-end' : 'flex-start',
-                      }}>
-                        <div style={{
-                          maxWidth: '60%', padding: '12px 16px',
-                          background: msg.sender_id === ADMIN_ID
-                            ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
-                            : 'var(--bg3)',
-                          border: msg.sender_id === ADMIN_ID ? 'none' : '1px solid rgba(212,160,23,.08)',
+                    messages.map(msg => {
+                      const isAdmin = msg.sender_id === ADMIN_ID
+                      return (
+                        <div key={msg.id} style={{
+                          display: 'flex',
+                          justifyContent: isAdmin ? 'flex-end' : 'flex-start',
                         }}>
                           <div style={{
-                            fontSize: '13px',
-                            color: msg.sender_id === ADMIN_ID ? 'var(--black)' : 'var(--white)',
-                            lineHeight: 1.6,
-                          }}>{msg.content}</div>
-                          <div style={{
-                            fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: '8px', letterSpacing: '1px',
-                            color: msg.sender_id === ADMIN_ID ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
-                            marginTop: '6px',
+                            maxWidth: '60%', padding: '12px 16px',
+                            background: isAdmin
+                              ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
+                              : 'rgba(255,255,255,0.06)',
+                            border: isAdmin ? 'none' : '1px solid rgba(212,160,23,.15)',
                           }}>
-                            {msg.sender_id !== ADMIN_ID && <span style={{ marginRight: '6px', color: 'var(--gold)' }}>Client</span>}
-                            {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            {!isAdmin && (
+                              <div style={{
+                                fontFamily: "'JetBrains Mono', monospace",
+                                fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase',
+                                color: 'var(--gold)', marginBottom: '6px',
+                              }}>
+                                {selectedClient.full_name || 'Client'}
+                              </div>
+                            )}
+                            <div style={{
+                              fontSize: '13px',
+                              color: isAdmin ? '#000' : 'var(--white)',
+                              lineHeight: 1.6,
+                            }}>{msg.content}</div>
+                            <div style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: '8px', letterSpacing: '1px',
+                              color: isAdmin ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
+                              marginTop: '6px',
+                            }}>
+                              {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                   <div ref={messagesEndRef} />
                 </div>
