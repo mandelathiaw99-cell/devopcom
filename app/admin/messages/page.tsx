@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -29,6 +29,7 @@ export default function AdminMessages() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [adminId, setAdminId] = useState<string | null>(null)
+  const channelRef = useRef<any>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +55,11 @@ export default function AdminMessages() {
   useEffect(() => {
     if (!selectedClient || !adminId) return
 
+    // Nettoyer l'ancien channel
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+    }
+
     const fetchMessages = async () => {
       const { data } = await supabase
         .from('messages')
@@ -63,7 +69,6 @@ export default function AdminMessages() {
 
       setMessages(data || [])
 
-      // Marquer comme lus
       await supabase.from('messages')
         .update({ read: true })
         .eq('sender_id', selectedClient.id)
@@ -91,7 +96,11 @@ export default function AdminMessages() {
       })
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
+    channelRef.current = channel
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [selectedClient, adminId])
 
   const handleSend = async () => {
@@ -202,14 +211,6 @@ export default function AdminMessages() {
                     borderLeft: selectedClient?.id === client.id ? '2px solid var(--gold)' : '2px solid transparent',
                     transition: 'background .2s',
                   }}
-                  onMouseEnter={e => {
-                    if (selectedClient?.id !== client.id)
-                      e.currentTarget.style.background = 'rgba(212,160,23,.03)'
-                  }}
-                  onMouseLeave={e => {
-                    if (selectedClient?.id !== client.id)
-                      e.currentTarget.style.background = 'transparent'
-                  }}
                 >
                   <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--white)', marginBottom: '4px' }}>
                     {client.full_name}
@@ -236,7 +237,7 @@ export default function AdminMessages() {
             </div>
           ) : (
             <>
-              {/* Header conversation */}
+              {/* Header */}
               <div style={{
                 padding: '20px 24px',
                 borderBottom: '1px solid rgba(212,160,23,.08)',
