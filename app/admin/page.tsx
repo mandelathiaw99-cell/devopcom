@@ -38,7 +38,6 @@ export default function Admin() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
-      // Vérifier que c'est un admin
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -50,7 +49,6 @@ export default function Admin() {
         return
       }
 
-      // Récupérer les stats
       const { data: clients } = await supabase.from('profiles').select('*').eq('role', 'client')
       const { data: projects } = await supabase.from('projects').select('*')
       const { data: invoices } = await supabase.from('invoices').select('*')
@@ -75,6 +73,14 @@ export default function Admin() {
     </div>
   )
 
+  const navItems = [
+    { label: 'Dashboard', href: '/admin' },
+    { label: 'Clients', href: '/admin/clients' },
+    { label: 'Projets', href: '/admin/projets' },
+    { label: 'Factures', href: '/admin/factures' },
+    { label: 'Messages', href: '/admin/messages' },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex' }}>
 
@@ -94,12 +100,7 @@ export default function Admin() {
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '7px', letterSpacing: '4px', color: 'var(--gold)', textTransform: 'uppercase', opacity: .7 }}>C · O · M · ADMIN</div>
         </div>
         <nav style={{ flex: 1, padding: '16px 0' }}>
-          {[
-            { label: 'Dashboard', href: '/admin' },
-            { label: 'Clients', href: '/admin/clients' },
-            { label: 'Projets', href: '/admin/projets' },
-            { label: 'Factures', href: '/admin/factures' },
-          ].map(item => (
+          {navItems.map(item => (
             <Link key={item.href} href={item.href} style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '10px 20px', fontSize: '12px',
@@ -131,7 +132,6 @@ export default function Admin() {
       {/* Main */}
       <div style={{ marginLeft: '220px', flex: 1, padding: '32px' }}>
 
-        {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '8px' }}>Administration</div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '40px', fontWeight: 300, color: 'var(--white)', lineHeight: 1 }}>
