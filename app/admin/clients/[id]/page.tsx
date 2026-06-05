@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import DocumentUpload from '@/components/ui/DocumentUpload'
 
 interface Client {
   id: string
@@ -33,6 +34,14 @@ interface Invoice {
   created_at: string
 }
 
+interface Document {
+  id: string
+  name: string
+  url: string
+  type: string
+  created_at: string
+}
+
 export default function ClientDetail() {
   const router = useRouter()
   const params = useParams()
@@ -41,6 +50,7 @@ export default function ClientDetail() {
   const [client, setClient] = useState<Client | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState('')
@@ -70,10 +80,12 @@ export default function ClientDetail() {
       const { data: clientData } = await supabase.from('profiles').select('*').eq('id', clientId).single()
       const { data: projectsData } = await supabase.from('projects').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
       const { data: invoicesData } = await supabase.from('invoices').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
+      const { data: documentsData } = await supabase.from('documents').select('*').eq('client_id', clientId).order('created_at', { ascending: false })
 
       setClient(clientData)
       setProjects(projectsData || [])
       setInvoices(invoicesData || [])
+      setDocuments(documentsData || [])
       setLoading(false)
     }
     fetchData()
@@ -243,7 +255,6 @@ export default function ClientDetail() {
               </div>
             </div>
 
-            {/* Actions rapides */}
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setShowProjectForm(!showProjectForm)} style={{
                 padding: '10px 20px',
@@ -279,9 +290,7 @@ export default function ClientDetail() {
         {/* Formulaire nouveau projet */}
         {showProjectForm && (
           <div style={{ background: 'var(--bg2)', padding: '32px', border: '1px solid rgba(212,160,23,.2)', marginBottom: '24px' }}>
-            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', fontWeight: 600, color: 'var(--gold)', marginBottom: '24px' }}>
-              Nouveau projet
-            </div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', fontWeight: 600, color: 'var(--gold)', marginBottom: '24px' }}>Nouveau projet</div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               <div>
                 <label style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', display: 'block', marginBottom: '8px' }}>Nom *</label>
@@ -372,7 +381,6 @@ export default function ClientDetail() {
                     </div>
                   </div>
 
-                  {/* Barre progression */}
                   <div style={{ marginBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', color: 'var(--blue-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Avancement</span>
@@ -385,7 +393,6 @@ export default function ClientDetail() {
                     />
                   </div>
 
-                  {/* Statut */}
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {['en_cours', 'revision', 'livre'].map(s => (
                       <button key={s} onClick={() => handleUpdateProject(project.id, s, project.progress)} style={{
@@ -405,7 +412,7 @@ export default function ClientDetail() {
         </div>
 
         {/* Factures */}
-        <div>
+        <div style={{ marginBottom: '32px' }}>
           <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '16px' }}>
             Factures ({invoices.length})
           </div>
@@ -447,6 +454,15 @@ export default function ClientDetail() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Documents */}
+        <div style={{ background: 'var(--bg2)', padding: '24px', border: '1px solid rgba(212,160,23,.08)' }}>
+          <DocumentUpload
+            clientId={clientId}
+            documents={documents}
+            setDocuments={setDocuments}
+          />
         </div>
       </div>
     </div>

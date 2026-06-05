@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 interface Document {
   id: string
@@ -17,11 +18,15 @@ export default function Documents() {
   const router = useRouter()
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
+
+      setUserId(user.id)
 
       const { data } = await supabase
         .from('documents')
@@ -31,9 +36,61 @@ export default function Documents() {
 
       setDocuments(data || [])
       setLoading(false)
+
+      // Realtime
+      const channel = supabase
+        .channel('documents-changes')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'documents',
+          filter: `client_id=eq.${user.id}`,
+        }, (payload) => {
+          setDocuments(prev => [payload.new as Document, ...prev])
+        })
+        .subscribe()
+
+      return () => supabase.removeChannel(channel)
     }
     fetchData()
   }, [router])
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !userId) return
+    const file = e.target.files[0]
+    setUploading(true)
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${userId}/${Date.now()}.${fileExt}`
+
+    const { data: uploadData, error } = await supabase.storage
+      .from('documents')
+      .upload(fileName, file)
+
+    if (error) {
+      console.error('Upload error:', error)
+      setUploading(false)
+      return
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('documents')
+      .getPublicUrl(fileName)
+
+    const fileType = fileExt === 'pdf' ? 'pdf' :
+      ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt || '') ? 'image' :
+      ['mp4', 'mov', 'avi'].includes(fileExt || '') ? 'video' :
+      fileExt === 'zip' ? 'zip' : 'file'
+
+    await supabase.from('documents').insert({
+      client_id: userId,
+      name: file.name,
+      url: urlData.publicUrl,
+      type: fileType,
+    })
+
+    setUploading(false)
+  }
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -100,55 +157,80 @@ export default function Documents() {
 
       {/* Main */}
       <div style={{ marginLeft: '220px', flex: 1, padding: '32px' }}>
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '8px' }}>Documents</div>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '40px', fontWeight: 300, color: 'var(--white)', lineHeight: 1 }}>
-            Mes <em style={{ color: 'var(--gold)', fontWeight: 600 }}>documents.</em>
-          </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+          <div>
+            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '8px' }}>Documents</div>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '40px', fontWeight: 300, color: 'var(--white)', lineHeight: 1 }}>
+              Mes <em style={{ color: 'var(--gold)', fontWeight: 600 }}>documents.</em>
+            </h1>
+          </div>
+
+          {/* Upload */}
+          <label style={{
+            padding: '12px 24px',
+            background: 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)',
+            color: 'var(--black)', fontWeight: 600, fontSize: '12px',
+            fontFamily: "'Outfit', sans-serif",
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            opacity: uploading ? .6 : 1,
+            display: 'inline-block',
+          }}>
+            {uploading ? 'Upload...' : '+ Envoyer un fichier'}
+            <input
+              type="file"
+              onChange={handleUpload}
+              style={{ display: 'none' }}
+              disabled={uploading}
+            />
+          </label>
         </div>
 
         {documents.length === 0 ? (
-          <div style={{ background: 'var(--bg2)', padding: '48px', border: '1px solid rgba(212,160,23,.08)', textAlign: 'center' }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            style={{ background: 'var(--bg2)', padding: '48px', border: '1px solid rgba(212,160,23,.08)', textAlign: 'center' }}
+          >
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📁</div>
             <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', color: 'var(--blue-muted)', fontStyle: 'italic', marginBottom: '8px' }}>
               Aucun document pour le moment.
             </div>
             <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', letterSpacing: '2px', color: 'var(--blue-muted)', textTransform: 'uppercase' }}>
-              Vos livrables apparaîtront ici
+              Envoyez un fichier ou attendez les livrables de DevopCom
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-            {documents.map(doc => (
-              <a key={doc.id} href={doc.url} target="_blank" rel="noopener noreferrer" style={{
-                background: 'var(--bg2)', padding: '24px',
-                border: '1px solid rgba(212,160,23,.08)',
-                textDecoration: 'none', display: 'block',
-                transition: 'border-color .2s, box-shadow .2s',
-              }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = 'rgba(212,160,23,.3)'
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(212,160,23,.07)'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = 'rgba(212,160,23,.08)'
-                  e.currentTarget.style.boxShadow = 'none'
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '12px' }}>
+            {documents.map((doc, i) => (
+              <motion.a
+                key={doc.id}
+                href={doc.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(212,160,23,.08)' }}
+                style={{
+                  background: 'var(--bg2)', padding: '24px',
+                  border: '1px solid rgba(212,160,23,.08)',
+                  textDecoration: 'none', display: 'block',
                 }}
               >
                 <div style={{ fontSize: '32px', marginBottom: '12px' }}>{getTypeIcon(doc.type)}</div>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', fontWeight: 600, color: 'var(--white)', marginBottom: '6px' }}>{doc.name}</div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', letterSpacing: '1px', color: 'var(--blue-muted)', textTransform: 'uppercase' }}>
+                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', fontWeight: 600, color: 'var(--white)', marginBottom: '6px', wordBreak: 'break-all' }}>{doc.name}</div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', letterSpacing: '1px', color: 'var(--blue-muted)', textTransform: 'uppercase', marginBottom: '16px' }}>
                   {new Date(doc.created_at).toLocaleDateString('fr-FR')}
                 </div>
                 <div style={{
-                  marginTop: '16px', padding: '8px 16px', textAlign: 'center',
+                  padding: '8px 16px', textAlign: 'center',
                   background: 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)',
                   color: 'var(--black)', fontFamily: "'JetBrains Mono', monospace",
                   fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: 700,
                 }}>
                   Télécharger →
                 </div>
-              </a>
+              </motion.a>
             ))}
           </div>
         )}
