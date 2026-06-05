@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+
+const ADMIN_ID = '6fefcc20-9563-430a-ae2a-1ca203d09314'
 
 interface Message {
   id: string
@@ -11,6 +13,7 @@ interface Message {
   created_at: string
   read: boolean
   sender_id: string
+  receiver_id: string
 }
 
 export default function Messages() {
@@ -20,29 +23,61 @@ export default function Messages() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
+      console.log('Client user ID:', user.id)
+      console.log('Admin ID:', ADMIN_ID)
+
       setUserId(user.id)
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .or(
+          `and(sender_id.eq.${user.id},receiver_id.eq.${ADMIN_ID}),and(sender_id.eq.${ADMIN_ID},receiver_id.eq.${user.id})`
+        )
         .order('created_at', { ascending: true })
 
+      console.log('Messages loaded:', data, error)
       setMessages(data || [])
       setLoading(false)
 
-      // Marquer les messages comme lus
       await supabase
         .from('messages')
         .update({ read: true })
         .eq('receiver_id', user.id)
         .eq('read', false)
+
+      const channel = supabase
+        .channel('client-messages')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        }, (payload) => {
+          const msg = payload.new as Message
+          if (
+            (msg.sender_id === user.id && msg.receiver_id === ADMIN_ID) ||
+            (msg.sender_id === ADMIN_ID && msg.receiver_id === user.id)
+          ) {
+            setMessages(prev => {
+              if (prev.find(m => m.id === msg.id)) return prev
+              return [...prev, msg]
+            })
+          }
+        })
+        .subscribe()
+
+      return () => supabase.removeChannel(channel)
     }
     fetchData()
   }, [router])
@@ -51,21 +86,18 @@ export default function Messages() {
     if (!newMessage.trim() || !userId) return
     setSending(true)
 
-    const { data } = await supabase
-      .from('messages')
-      .insert({
-        sender_id: userId,
-        receiver_id: userId, // En production ce sera l'ID de l'admin
-        content: newMessage,
-        read: false,
-      })
-      .select()
-      .single()
+    console.log('Sending message from:', userId, 'to admin:', ADMIN_ID)
 
-    if (data) {
-      setMessages(prev => [...prev, data])
-      setNewMessage('')
-    }
+    const { error } = await supabase.from('messages').insert({
+      sender_id: userId,
+      receiver_id: ADMIN_ID,
+      content: newMessage,
+      read: false,
+    })
+
+    if (error) console.error('Erreur envoi:', error)
+
+    setNewMessage('')
     setSending(false)
   }
 
@@ -131,14 +163,12 @@ export default function Messages() {
           </h1>
         </div>
 
-        {/* Zone messages */}
         <div style={{
           flex: 1, background: 'var(--bg2)',
           border: '1px solid rgba(212,160,23,.08)',
           display: 'flex', flexDirection: 'column',
           minHeight: '400px',
         }}>
-          {/* Messages */}
           <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {messages.length === 0 ? (
               <div style={{ textAlign: 'center', marginTop: '60px' }}>
@@ -157,9 +187,18 @@ export default function Messages() {
                 }}>
                   <div style={{
                     maxWidth: '60%', padding: '12px 16px',
-                    background: msg.sender_id === userId ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)' : 'var(--bg3)',
-                    border: msg.sender_id === userId ? 'none' : '1px solid rgba(212,160,23,.08)',
+                    background: msg.sender_id === userId
+                      ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
+                      : 'rgba(255,255,255,0.06)',
+                    border: msg.sender_id === userId ? 'none' : '1px solid rgba(212,160,23,.15)',
                   }}>
+                    {msg.sender_id !== userId && (
+                      <div style={{
+                        fontFamily: "'JetBrains Mono', monospace",
+                        fontSize: '8px', letterSpacing: '1px', textTransform: 'uppercase',
+                        color: 'var(--gold)', marginBottom: '6px',
+                      }}>DevopCom</div>
+                    )}
                     <div style={{
                       fontSize: '13px',
                       color: msg.sender_id === userId ? 'var(--black)' : 'var(--white)',
@@ -177,9 +216,9 @@ export default function Messages() {
                 </div>
               ))
             )}
+            <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div style={{
             padding: '16px 24px',
             borderTop: '1px solid rgba(212,160,23,.08)',
