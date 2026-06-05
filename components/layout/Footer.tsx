@@ -48,12 +48,18 @@ export default function Footer() {
             color: 'var(--gold)', opacity: .7, marginBottom: '18px',
           }}>Services</div>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {['Développement Web', 'Communication', 'Identité Visuelle', 'E-commerce', 'Consulting'].map(s => (
-              <li key={s}>
-                <Link href="#services" style={{
+            {[
+              { label: 'Développement Web', href: '/#services' },
+              { label: 'Communication', href: '/#services' },
+              { label: 'Identité Visuelle', href: '/#services' },
+              { label: 'E-commerce', href: '/#services' },
+              { label: 'Consulting', href: '/#services' },
+            ].map(s => (
+              <li key={s.label}>
+                <Link href={s.href} style={{
                   fontSize: '12px', color: 'var(--blue-muted)',
-                  textDecoration: 'none', transition: 'color .2s',
-                }}>{s}</Link>
+                  textDecoration: 'none',
+                }}>{s.label}</Link>
               </li>
             ))}
           </ul>
@@ -67,12 +73,18 @@ export default function Footer() {
             color: 'var(--gold)', opacity: .7, marginBottom: '18px',
           }}>Informations</div>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {['À propos', 'Tarifs', 'Process', 'Blog', 'Contact'].map(s => (
-              <li key={s}>
-                <Link href="#" style={{
+            {[
+              { label: 'À propos', href: '/#about' },
+              { label: 'Tarifs', href: '/#tarifs' },
+              { label: 'Portfolio', href: '/portfolio' },
+              { label: 'Blog', href: '/blog' },
+              { label: 'Contact', href: '/devis' },
+            ].map(s => (
+              <li key={s.label}>
+                <Link href={s.href} style={{
                   fontSize: '12px', color: 'var(--blue-muted)',
-                  textDecoration: 'none', transition: 'color .2s',
-                }}>{s}</Link>
+                  textDecoration: 'none',
+                }}>{s.label}</Link>
               </li>
             ))}
           </ul>
@@ -84,14 +96,19 @@ export default function Footer() {
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '8px', letterSpacing: '3px', textTransform: 'uppercase',
             color: 'var(--gold)', opacity: .7, marginBottom: '18px',
-          }}>Legal</div>
+          }}>Légal</div>
           <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {['Mentions légales', 'CGV', 'Confidentialité'].map(s => (
-              <li key={s}>
-                <Link href="#" style={{
+            {[
+              { label: 'Mentions légales', href: '/mentions-legales' },
+              { label: 'CGV', href: '/cgv' },
+              { label: 'CGU', href: '/cgu' },
+              { label: 'RGPD', href: '/rgpd' },
+            ].map(s => (
+              <li key={s.label}>
+                <Link href={s.href} style={{
                   fontSize: '12px', color: 'var(--blue-muted)',
-                  textDecoration: 'none', transition: 'color .2s',
-                }}>{s}</Link>
+                  textDecoration: 'none',
+                }}>{s.label}</Link>
               </li>
             ))}
           </ul>
@@ -110,14 +127,18 @@ export default function Footer() {
           © 2026 DevopCom — Auto-entrepreneur · SIRET en cours
         </p>
         <div style={{ display: 'flex', gap: '8px' }}>
-          {['in', 'ig', 'gh'].map(s => (
-            <Link key={s} href="#" style={{
+          {[
+            { label: 'in', href: 'https://linkedin.com' },
+            { label: 'ig', href: 'https://instagram.com' },
+            { label: 'gh', href: 'https://github.com/mandelathiaw99-cell/devopcom' },
+          ].map(s => (
+            <Link key={s.label} href={s.href} target="_blank" style={{
               width: '32px', height: '32px',
               border: '1px solid rgba(212,160,23,.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '12px', textDecoration: 'none',
-              color: 'var(--blue-muted)', transition: 'all .2s',
-            }}>{s}</Link>
+              color: 'var(--blue-muted)',
+            }}>{s.label}</Link>
           ))}
         </div>
       </div>
