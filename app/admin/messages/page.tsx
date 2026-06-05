@@ -1,121 +1,79 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-interface Client {
-  id: string
-  full_name: string
-  email: string
-}
+const ADMIN_ID = '6fefcc20-9563-430a-ae2a-1ca203d09314'
 
 interface Message {
   id: string
   content: string
   created_at: string
+  read: boolean
   sender_id: string
   receiver_id: string
-  read: boolean
 }
 
-export default function AdminMessages() {
+export default function Messages() {
   const router = useRouter()
-  const [clients, setClients] = useState<Client[]>([])
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const adminIdRef = useRef<string | null>(null)
-  const channelRef = useRef<any>(null)
-  const selectedClientRef = useRef<Client | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth/login'); return }
 
-      const { data: profile } = await supabase
-        .from('profiles').select('role').eq('id', user.id).single()
-      if (profile?.role !== 'admin') { router.push('/dashboard'); return }
+      setUserId(user.id)
 
-      adminIdRef.current = user.id
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .order('created_at', { ascending: true })
 
-      const { data: clientsData } = await supabase
-        .from('profiles').select('id, full_name, email')
-        .eq('role', 'client').order('full_name')
-
-      setClients(clientsData || [])
+      setMessages(data || [])
       setLoading(false)
+
+      // Marquer les messages comme lus
+      await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('receiver_id', user.id)
+        .eq('read', false)
+
+      // Realtime
+      const channel = supabase
+        .channel('client-messages')
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+        }, (payload) => {
+          const msg = payload.new as Message
+          if (msg.sender_id === user.id || msg.receiver_id === user.id) {
+            setMessages(prev => [...prev, msg])
+          }
+        })
+        .subscribe()
+
+      return () => supabase.removeChannel(channel)
     }
     fetchData()
   }, [router])
 
-  const loadMessages = async (client: Client) => {
-    if (!adminIdRef.current) return
-
-    selectedClientRef.current = client
-
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current)
-    }
-
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .or(`sender_id.eq.${adminIdRef.current},receiver_id.eq.${adminIdRef.current}`)
-      .order('created_at', { ascending: true })
-
-    const filtered = (data || []).filter(msg =>
-      (msg.sender_id === adminIdRef.current && msg.receiver_id === client.id) ||
-      (msg.sender_id === client.id && msg.receiver_id === adminIdRef.current)
-    )
-
-    setMessages(filtered)
-
-    await supabase.from('messages')
-      .update({ read: true })
-      .eq('sender_id', client.id)
-      .eq('receiver_id', adminIdRef.current)
-      .eq('read', false)
-
-    const channel = supabase
-      .channel(`admin-chat-${client.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-      }, (payload) => {
-        const msg = payload.new as Message
-        const currentClient = selectedClientRef.current
-        const currentAdminId = adminIdRef.current
-        if (
-          currentClient && currentAdminId &&
-          ((msg.sender_id === currentAdminId && msg.receiver_id === currentClient.id) ||
-          (msg.sender_id === currentClient.id && msg.receiver_id === currentAdminId))
-        ) {
-          setMessages(prev => [...prev, msg])
-        }
-      })
-      .subscribe()
-
-    channelRef.current = channel
-  }
-
-  const handleSelectClient = (client: Client) => {
-    setSelectedClient(client)
-    loadMessages(client)
-  }
-
   const handleSend = async () => {
-    if (!newMessage.trim() || !adminIdRef.current || !selectedClient) return
+    if (!newMessage.trim() || !userId) return
     setSending(true)
 
     await supabase.from('messages').insert({
-      sender_id: adminIdRef.current,
-      receiver_id: selectedClient.id,
+      sender_id: userId,
+      receiver_id: ADMIN_ID,
       content: newMessage,
       read: false,
     })
@@ -146,34 +104,28 @@ export default function AdminMessages() {
             background: 'linear-gradient(90deg, #f953c6, #7c3aed, #2563eb, #06b6d4)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1,
           }}>DEVOP</div>
-          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '7px', letterSpacing: '4px', color: 'var(--gold)', textTransform: 'uppercase', opacity: .7 }}>C · O · M · ADMIN</div>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '7px', letterSpacing: '4px', color: 'var(--gold)', textTransform: 'uppercase', opacity: .7 }}>C · O · M</div>
         </div>
         <nav style={{ flex: 1, padding: '16px 0' }}>
           {[
-            { label: 'Dashboard', href: '/admin' },
-            { label: 'Clients', href: '/admin/clients' },
-            { label: 'Projets', href: '/admin/projets' },
-            { label: 'Factures', href: '/admin/factures' },
-            { label: 'Messages', href: '/admin/messages' },
+            { label: 'Dashboard', href: '/dashboard' },
+            { label: 'Mon projet', href: '/dashboard/projet' },
+            { label: 'Factures', href: '/dashboard/factures' },
+            { label: 'Messages', href: '/dashboard/messages' },
+            { label: 'Documents', href: '/dashboard/documents' },
+            { label: 'Paramètres', href: '/dashboard/parametres' },
           ].map(item => (
             <Link key={item.href} href={item.href} style={{
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '10px 20px', fontSize: '12px',
-              color: item.href === '/admin/messages' ? 'var(--gold)' : 'rgba(138,154,181,.6)',
+              color: item.href === '/dashboard/messages' ? 'var(--gold)' : 'rgba(138,154,181,.6)',
               textDecoration: 'none',
-              borderLeft: item.href === '/admin/messages' ? '2px solid var(--gold)' : '2px solid transparent',
-              background: item.href === '/admin/messages' ? 'rgba(212,160,23,.04)' : 'transparent',
+              borderLeft: item.href === '/dashboard/messages' ? '2px solid var(--gold)' : '2px solid transparent',
+              background: item.href === '/dashboard/messages' ? 'rgba(212,160,23,.04)' : 'transparent',
             }}>{item.label}</Link>
           ))}
         </nav>
-        <div style={{ padding: '20px', borderTop: '1px solid rgba(212,160,23,.08)' }}>
-          <Link href="/" style={{
-            display: 'block', textAlign: 'center', padding: '8px',
-            fontFamily: "'JetBrains Mono', monospace", fontSize: '9px',
-            letterSpacing: '2px', textTransform: 'uppercase',
-            color: 'var(--blue-muted)', textDecoration: 'none',
-            border: '1px solid rgba(212,160,23,.15)', marginBottom: '8px',
-          }}>← Site public</Link>
+        <div style={{ padding: '20px' }}>
           <button onClick={async () => { await supabase.auth.signOut(); router.push('/') }} style={{
             width: '100%', padding: '10px',
             fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
@@ -184,145 +136,94 @@ export default function AdminMessages() {
       </div>
 
       {/* Main */}
-      <div style={{ marginLeft: '220px', flex: 1, display: 'flex', height: '100vh' }}>
-
-        {/* Liste clients */}
-        <div style={{
-          width: '280px', background: 'var(--bg2)',
-          borderRight: '1px solid rgba(212,160,23,.08)',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          <div style={{ padding: '24px 20px', borderBottom: '1px solid rgba(212,160,23,.08)' }}>
-            <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)' }}>
-              Conversations
-            </div>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {clients.map(client => (
-              <div
-                key={client.id}
-                onClick={() => handleSelectClient(client)}
-                style={{
-                  padding: '16px 20px', cursor: 'pointer',
-                  borderBottom: '1px solid rgba(212,160,23,.05)',
-                  background: selectedClient?.id === client.id ? 'rgba(212,160,23,.06)' : 'transparent',
-                  borderLeft: selectedClient?.id === client.id ? '2px solid var(--gold)' : '2px solid transparent',
-                }}
-              >
-                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--white)', marginBottom: '4px' }}>
-                  {client.full_name}
-                </div>
-                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--blue-muted)' }}>
-                  {client.email}
-                </div>
-              </div>
-            ))}
-          </div>
+      <div style={{ marginLeft: '220px', flex: 1, padding: '32px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--gold)', marginBottom: '8px' }}>Messages</div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '40px', fontWeight: 300, color: 'var(--white)', lineHeight: 1 }}>
+            Mes <em style={{ color: 'var(--gold)', fontWeight: 600 }}>messages.</em>
+          </h1>
         </div>
 
         {/* Zone messages */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {!selectedClient ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>💬</div>
+        <div style={{
+          flex: 1, background: 'var(--bg2)',
+          border: '1px solid rgba(212,160,23,.08)',
+          display: 'flex', flexDirection: 'column',
+          minHeight: '400px',
+        }}>
+          {/* Messages */}
+          <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {messages.length === 0 ? (
+              <div style={{ textAlign: 'center', marginTop: '60px' }}>
                 <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', color: 'var(--blue-muted)', fontStyle: 'italic' }}>
-                  Sélectionnez un client pour démarrer une conversation
+                  Aucun message pour le moment.
+                </div>
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', letterSpacing: '2px', color: 'var(--blue-muted)', textTransform: 'uppercase', marginTop: '8px' }}>
+                  Envoyez un message à l'équipe DevopCom
                 </div>
               </div>
-            </div>
-          ) : (
-            <>
-              {/* Header */}
-              <div style={{
-                padding: '20px 24px',
-                borderBottom: '1px solid rgba(212,160,23,.08)',
-                background: 'var(--bg2)',
-                display: 'flex', alignItems: 'center', gap: '12px',
-              }}>
-                <div style={{
-                  width: '36px', height: '36px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #f5d480, #d4a017)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: "'Cormorant Garamond', serif", fontSize: '18px', fontWeight: 600, color: 'var(--black)',
-                }}>{selectedClient.full_name[0]}</div>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--white)' }}>{selectedClient.full_name}</div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--blue-muted)' }}>{selectedClient.email}</div>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {messages.length === 0 ? (
-                  <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                    <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '16px', color: 'var(--blue-muted)', fontStyle: 'italic' }}>
-                      Aucun message — démarrez la conversation
+            ) : (
+              messages.map(msg => (
+                <div key={msg.id} style={{
+                  display: 'flex',
+                  justifyContent: msg.sender_id === userId ? 'flex-end' : 'flex-start',
+                }}>
+                  <div style={{
+                    maxWidth: '60%', padding: '12px 16px',
+                    background: msg.sender_id === userId
+                      ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
+                      : 'var(--bg3)',
+                    border: msg.sender_id === userId ? 'none' : '1px solid rgba(212,160,23,.08)',
+                  }}>
+                    <div style={{
+                      fontSize: '13px',
+                      color: msg.sender_id === userId ? 'var(--black)' : 'var(--white)',
+                      lineHeight: 1.6,
+                    }}>{msg.content}</div>
+                    <div style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: '8px', letterSpacing: '1px',
+                      color: msg.sender_id === userId ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
+                      marginTop: '6px',
+                    }}>
+                      {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
-                ) : (
-                  messages.map(msg => (
-                    <div key={msg.id} style={{
-                      display: 'flex',
-                      justifyContent: msg.sender_id === adminIdRef.current ? 'flex-end' : 'flex-start',
-                    }}>
-                      <div style={{
-                        maxWidth: '60%', padding: '12px 16px',
-                        background: msg.sender_id === adminIdRef.current
-                          ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
-                          : 'var(--bg3)',
-                        border: msg.sender_id === adminIdRef.current ? 'none' : '1px solid rgba(212,160,23,.08)',
-                      }}>
-                        <div style={{
-                          fontSize: '13px', lineHeight: 1.6,
-                          color: msg.sender_id === adminIdRef.current ? 'var(--black)' : 'var(--white)',
-                        }}>{msg.content}</div>
-                        <div style={{
-                          fontFamily: "'JetBrains Mono', monospace", fontSize: '8px',
-                          color: msg.sender_id === adminIdRef.current ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
-                          marginTop: '6px',
-                        }}>
-                          {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                </div>
+              ))
+            )}
+          </div>
 
-              {/* Input */}
-              <div style={{
-                padding: '16px 24px',
-                borderTop: '1px solid rgba(212,160,23,.08)',
-                display: 'flex', gap: '12px',
-                background: 'var(--bg2)',
-              }}>
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSend()}
-                  placeholder={`Répondre à ${selectedClient.full_name}...`}
-                  style={{
-                    flex: 1, padding: '12px 16px',
-                    background: 'rgba(212,160,23,.04)',
-                    border: '1px solid rgba(212,160,23,.15)',
-                    color: 'var(--white)',
-                    fontFamily: "'Outfit', sans-serif", fontSize: '13px', outline: 'none',
-                  }}
-                />
-                <button onClick={handleSend} disabled={sending} style={{
-                  padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)',
-                  color: 'var(--black)', fontWeight: 600, fontSize: '12px',
-                  fontFamily: "'Outfit', sans-serif",
-                  border: 'none', cursor: sending ? 'not-allowed' : 'pointer',
-                }}>
-                  {sending ? '...' : 'Envoyer →'}
-                </button>
-              </div>
-            </>
-          )}
+          {/* Input */}
+          <div style={{
+            padding: '16px 24px',
+            borderTop: '1px solid rgba(212,160,23,.08)',
+            display: 'flex', gap: '12px',
+          }}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={e => setNewMessage(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              placeholder="Écrivez votre message..."
+              style={{
+                flex: 1, padding: '12px 16px',
+                background: 'rgba(212,160,23,.04)',
+                border: '1px solid rgba(212,160,23,.15)',
+                color: 'var(--white)',
+                fontFamily: "'Outfit', sans-serif", fontSize: '13px', outline: 'none',
+              }}
+            />
+            <button onClick={handleSend} disabled={sending} style={{
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)',
+              color: 'var(--black)', fontWeight: 600, fontSize: '12px',
+              fontFamily: "'Outfit', sans-serif",
+              border: 'none', cursor: sending ? 'not-allowed' : 'pointer',
+            }}>
+              {sending ? '...' : 'Envoyer →'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
