@@ -32,6 +32,7 @@ export default function AdminMessages() {
   const [sending, setSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const selectedClientRef = useRef<Client | null>(null)
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     selectedClientRef.current = selectedClient
@@ -71,56 +72,47 @@ export default function AdminMessages() {
     fetchData()
   }, [router])
 
+  const fetchMessages = async (clientId: string) => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(
+        `and(sender_id.eq.${clientId},receiver_id.eq.${ADMIN_ID}),and(sender_id.eq.${ADMIN_ID},receiver_id.eq.${clientId})`
+      )
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Erreur fetch messages:', error)
+      return
+    }
+
+    setMessages(data || [])
+  }
+
   useEffect(() => {
     if (!selectedClient) return
 
-    const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .or(
-          `and(sender_id.eq.${selectedClient.id},receiver_id.eq.${ADMIN_ID}),and(sender_id.eq.${ADMIN_ID},receiver_id.eq.${selectedClient.id})`
-        )
-        .order('created_at', { ascending: true })
+    // Fetch immédiat
+    fetchMessages(selectedClient.id)
 
-      setMessages(data || [])
+    // Marquer comme lus
+    supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('sender_id', selectedClient.id)
+      .eq('receiver_id', ADMIN_ID)
+      .eq('read', false)
 
-      await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('sender_id', selectedClient.id)
-        .eq('receiver_id', ADMIN_ID)
-        .eq('read', false)
+    // Polling toutes les 3 secondes
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    pollingRef.current = setInterval(() => {
+      const current = selectedClientRef.current
+      if (current) fetchMessages(current.id)
+    }, 3000)
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
     }
-
-    fetchMessages()
-
-    // Realtime sans filter — on filtre manuellement dans le callback
-    const channel = supabase
-      .channel(`admin-conv-${selectedClient.id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-      }, (payload) => {
-        const msg = payload.new as Message
-        const currentClient = selectedClientRef.current
-        if (!currentClient) return
-
-        const isClientToAdmin = msg.sender_id === currentClient.id && msg.receiver_id === ADMIN_ID
-        const isAdminToClient = msg.sender_id === ADMIN_ID && msg.receiver_id === currentClient.id
-
-        if (isClientToAdmin || isAdminToClient) {
-          setMessages(prev => {
-            // Éviter les doublons
-            if (prev.find(m => m.id === msg.id)) return prev
-            return [...prev, msg]
-          })
-        }
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
   }, [selectedClient])
 
   const handleSend = async () => {
@@ -138,6 +130,8 @@ export default function AdminMessages() {
 
     setNewMessage('')
     setSending(false)
+    // Refresh immédiat après envoi
+    fetchMessages(selectedClient.id)
   }
 
   if (loading) return (
