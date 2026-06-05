@@ -55,7 +55,6 @@ export default function AdminMessages() {
   useEffect(() => {
     if (!selectedClient || !adminId) return
 
-    // Nettoyer l'ancien channel
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current)
     }
@@ -64,10 +63,15 @@ export default function AdminMessages() {
       const { data } = await supabase
         .from('messages')
         .select('*')
-        .or(`and(sender_id.eq.${adminId},receiver_id.eq.${selectedClient.id}),and(sender_id.eq.${selectedClient.id},receiver_id.eq.${adminId})`)
+        .or(`sender_id.eq.${adminId},receiver_id.eq.${adminId}`)
         .order('created_at', { ascending: true })
 
-      setMessages(data || [])
+      const filtered = (data || []).filter(msg =>
+        (msg.sender_id === adminId && msg.receiver_id === selectedClient.id) ||
+        (msg.sender_id === selectedClient.id && msg.receiver_id === adminId)
+      )
+
+      setMessages(filtered)
 
       await supabase.from('messages')
         .update({ read: true })
@@ -78,7 +82,6 @@ export default function AdminMessages() {
 
     fetchMessages()
 
-    // Realtime
     const channel = supabase
       .channel(`messages-admin-${selectedClient.id}`)
       .on('postgres_changes', {
