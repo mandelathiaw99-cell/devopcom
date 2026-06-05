@@ -28,8 +28,9 @@ export default function AdminMessages() {
   const [newMessage, setNewMessage] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const [adminId, setAdminId] = useState<string | null>(null)
+  const adminIdRef = useRef<string | null>(null)
   const channelRef = useRef<any>(null)
+  const selectedClientRef = useRef<Client | null>(null)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,7 +41,7 @@ export default function AdminMessages() {
         .from('profiles').select('role').eq('id', user.id).single()
       if (profile?.role !== 'admin') { router.push('/dashboard'); return }
 
-      setAdminId(user.id)
+      adminIdRef.current = user.id
 
       const { data: clientsData } = await supabase
         .from('profiles').select('id, full_name, email')
@@ -52,47 +53,48 @@ export default function AdminMessages() {
     fetchData()
   }, [router])
 
-  useEffect(() => {
-    if (!selectedClient || !adminId) return
+  const loadMessages = async (client: Client) => {
+    if (!adminIdRef.current) return
+
+    selectedClientRef.current = client
 
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current)
     }
 
-    const fetchMessages = async () => {
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${adminId},receiver_id.eq.${adminId}`)
-        .order('created_at', { ascending: true })
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`sender_id.eq.${adminIdRef.current},receiver_id.eq.${adminIdRef.current}`)
+      .order('created_at', { ascending: true })
 
-      const filtered = (data || []).filter(msg =>
-        (msg.sender_id === adminId && msg.receiver_id === selectedClient.id) ||
-        (msg.sender_id === selectedClient.id && msg.receiver_id === adminId)
-      )
+    const filtered = (data || []).filter(msg =>
+      (msg.sender_id === adminIdRef.current && msg.receiver_id === client.id) ||
+      (msg.sender_id === client.id && msg.receiver_id === adminIdRef.current)
+    )
 
-      setMessages(filtered)
+    setMessages(filtered)
 
-      await supabase.from('messages')
-        .update({ read: true })
-        .eq('sender_id', selectedClient.id)
-        .eq('receiver_id', adminId)
-        .eq('read', false)
-    }
-
-    fetchMessages()
+    await supabase.from('messages')
+      .update({ read: true })
+      .eq('sender_id', client.id)
+      .eq('receiver_id', adminIdRef.current)
+      .eq('read', false)
 
     const channel = supabase
-      .channel(`messages-admin-${selectedClient.id}`)
+      .channel(`admin-chat-${client.id}`)
       .on('postgres_changes', {
         event: 'INSERT',
         schema: 'public',
         table: 'messages',
       }, (payload) => {
         const msg = payload.new as Message
+        const currentClient = selectedClientRef.current
+        const currentAdminId = adminIdRef.current
         if (
-          (msg.sender_id === adminId && msg.receiver_id === selectedClient.id) ||
-          (msg.sender_id === selectedClient.id && msg.receiver_id === adminId)
+          currentClient && currentAdminId &&
+          ((msg.sender_id === currentAdminId && msg.receiver_id === currentClient.id) ||
+          (msg.sender_id === currentClient.id && msg.receiver_id === currentAdminId))
         ) {
           setMessages(prev => [...prev, msg])
         }
@@ -100,27 +102,25 @@ export default function AdminMessages() {
       .subscribe()
 
     channelRef.current = channel
+  }
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [selectedClient, adminId])
+  const handleSelectClient = (client: Client) => {
+    setSelectedClient(client)
+    loadMessages(client)
+  }
 
   const handleSend = async () => {
-    if (!newMessage.trim() || !adminId || !selectedClient) return
+    if (!newMessage.trim() || !adminIdRef.current || !selectedClient) return
     setSending(true)
 
-    const { data } = await supabase.from('messages').insert({
-      sender_id: adminId,
+    await supabase.from('messages').insert({
+      sender_id: adminIdRef.current,
       receiver_id: selectedClient.id,
       content: newMessage,
       read: false,
-    }).select().single()
+    })
 
-    if (data) {
-      setMessages(prev => [...prev, data])
-      setNewMessage('')
-    }
+    setNewMessage('')
     setSending(false)
   }
 
@@ -198,32 +198,25 @@ export default function AdminMessages() {
             </div>
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {clients.length === 0 ? (
-              <div style={{ padding: '24px', fontFamily: "'Cormorant Garamond', serif", fontSize: '14px', color: 'var(--blue-muted)', fontStyle: 'italic' }}>
-                Aucun client
-              </div>
-            ) : (
-              clients.map(client => (
-                <div
-                  key={client.id}
-                  onClick={() => setSelectedClient(client)}
-                  style={{
-                    padding: '16px 20px', cursor: 'pointer',
-                    borderBottom: '1px solid rgba(212,160,23,.05)',
-                    background: selectedClient?.id === client.id ? 'rgba(212,160,23,.06)' : 'transparent',
-                    borderLeft: selectedClient?.id === client.id ? '2px solid var(--gold)' : '2px solid transparent',
-                    transition: 'background .2s',
-                  }}
-                >
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--white)', marginBottom: '4px' }}>
-                    {client.full_name}
-                  </div>
-                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--blue-muted)' }}>
-                    {client.email}
-                  </div>
+            {clients.map(client => (
+              <div
+                key={client.id}
+                onClick={() => handleSelectClient(client)}
+                style={{
+                  padding: '16px 20px', cursor: 'pointer',
+                  borderBottom: '1px solid rgba(212,160,23,.05)',
+                  background: selectedClient?.id === client.id ? 'rgba(212,160,23,.06)' : 'transparent',
+                  borderLeft: selectedClient?.id === client.id ? '2px solid var(--gold)' : '2px solid transparent',
+                }}
+              >
+                <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--white)', marginBottom: '4px' }}>
+                  {client.full_name}
                 </div>
-              ))
-            )}
+                <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: 'var(--blue-muted)' }}>
+                  {client.email}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -271,22 +264,22 @@ export default function AdminMessages() {
                   messages.map(msg => (
                     <div key={msg.id} style={{
                       display: 'flex',
-                      justifyContent: msg.sender_id === adminId ? 'flex-end' : 'flex-start',
+                      justifyContent: msg.sender_id === adminIdRef.current ? 'flex-end' : 'flex-start',
                     }}>
                       <div style={{
                         maxWidth: '60%', padding: '12px 16px',
-                        background: msg.sender_id === adminId
+                        background: msg.sender_id === adminIdRef.current
                           ? 'linear-gradient(135deg, #f5d480, #d4a017, #b8860b)'
                           : 'var(--bg3)',
-                        border: msg.sender_id === adminId ? 'none' : '1px solid rgba(212,160,23,.08)',
+                        border: msg.sender_id === adminIdRef.current ? 'none' : '1px solid rgba(212,160,23,.08)',
                       }}>
                         <div style={{
                           fontSize: '13px', lineHeight: 1.6,
-                          color: msg.sender_id === adminId ? 'var(--black)' : 'var(--white)',
+                          color: msg.sender_id === adminIdRef.current ? 'var(--black)' : 'var(--white)',
                         }}>{msg.content}</div>
                         <div style={{
                           fontFamily: "'JetBrains Mono', monospace", fontSize: '8px',
-                          color: msg.sender_id === adminId ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
+                          color: msg.sender_id === adminIdRef.current ? 'rgba(0,0,0,.5)' : 'var(--blue-muted)',
                           marginTop: '6px',
                         }}>
                           {new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
