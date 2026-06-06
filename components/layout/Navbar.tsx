@@ -21,7 +21,7 @@ export default function Navbar() {
     { label: 'Tarifs', href: '/#packs' },
     { label: 'Portfolio', href: '/portfolio' },
     { label: 'Blog', href: '/blog' },
-    { label: 'Outils', href: '/analyser' },
+    { label: 'Outils', href: '/outils' },
     { label: 'Contact', href: '/contact' },
   ]
 
