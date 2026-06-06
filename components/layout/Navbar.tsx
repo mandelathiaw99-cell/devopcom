@@ -18,7 +18,7 @@ export default function Navbar() {
     { label: 'Tarifs', href: '#packs' },
     { label: 'Portfolio', href: '/portfolio' },
     { label: 'Blog', href: '/blog' },
-    { label: 'Analyser', href: '/analyser' },
+    { label: 'Outils', href: '/analyser' },
     { label: 'Contact', href: '/contact' },
   ]
 
@@ -62,10 +62,10 @@ export default function Navbar() {
               <Link href={link.href} style={{
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: '9px', letterSpacing: '2px', textTransform: 'uppercase',
-                color: link.label === 'Analyser' ? 'var(--gold)' : 'var(--blue-muted)',
+                color: link.label === 'Outils' ? 'var(--gold)' : 'var(--blue-muted)',
                 textDecoration: 'none',
-                border: link.label === 'Analyser' ? '1px solid rgba(212,160,23,.3)' : 'none',
-                padding: link.label === 'Analyser' ? '4px 10px' : '0',
+                border: link.label === 'Outils' ? '1px solid rgba(212,160,23,.3)' : 'none',
+                padding: link.label === 'Outils' ? '4px 10px' : '0',
               }}>{link.label}</Link>
             </li>
           ))}
@@ -118,7 +118,7 @@ export default function Navbar() {
               style={{
                 fontFamily: "'JetBrains Mono', monospace",
                 fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase',
-                color: link.label === 'Analyser' ? 'var(--gold)' : 'var(--white)',
+                color: link.label === 'Outils' ? 'var(--gold)' : 'var(--white)',
                 textDecoration: 'none',
                 padding: '12px 0',
                 borderBottom: '1px solid rgba(212,160,23,.08)',
