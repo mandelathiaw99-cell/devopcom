@@ -124,7 +124,7 @@ export default function Footer() {
           fontSize: '8px', letterSpacing: '2px',
           color: 'rgba(138,154,181,.25)', textTransform: 'uppercase',
         }}>
-          © 2026 DevopCom — Auto-entrepreneur · SIRET en cours
+          © 2026 DevopCom — Entrepreneur individuel · SIREN 107 384 620
         </p>
         <div style={{ display: 'flex', gap: '8px' }}>
           {[

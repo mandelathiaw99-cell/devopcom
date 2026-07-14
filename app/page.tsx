@@ -6,7 +6,6 @@ import Process from '@/components/sections/Process'
 import About from '@/components/sections/About'
 import Testimonials from '@/components/sections/Testimonials'
 import CTA from '@/components/sections/CTA'
-import Footer from '@/components/layout/Footer'
 
 export default function Home() {
   return (
@@ -19,7 +18,6 @@ export default function Home() {
       <About />
       <Testimonials />
       <CTA />
-      <Footer />
     </main>
   )
 }

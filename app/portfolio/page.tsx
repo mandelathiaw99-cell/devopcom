@@ -72,6 +72,23 @@ const projects = [
       { val: '100%', label: 'Sur-mesure' },
     ],
   },
+  {
+    id: 'aaed',
+    num: '05',
+    title: 'AAED',
+    subtitle: 'Auto-Entrepreneurs Africains de la Diaspora',
+    category: 'Web + Paiement + Sécurité',
+    year: '2026',
+    description: 'Plateforme complète pour l\'association fédérant plus de 1500 entrepreneurs africains de la diaspora — gestion d\'événements, système de réservation de stands (Bronze, Gold, Culinaire) via Stripe, dashboard membre à 9 espaces incluant messagerie et marketplace, cartes de membre numériques avec QR code, et audit de sécurité complet.',
+    tags: ['Next.js', 'Supabase', 'Stripe', 'Resend', 'Vercel'],
+    url: 'https://aaed.fr',
+    color: '#8B5E34',
+    metrics: [
+      { val: '1500+', label: 'Membres' },
+      { val: '9', label: 'Espaces membre' },
+      { val: '100%', label: 'Sur-mesure' },
+    ],
+  },
 ]
 
 export default function Portfolio() {
