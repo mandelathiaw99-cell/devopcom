@@ -10,16 +10,22 @@ const testimonials = [
     initial: 'A',
   },
   {
-    quote: 'Mandela comprend à la fois le technique et la communication. C\'est rare. Il a traduit notre vision en quelque chose de concret.',
-    name: 'EasyTud',
-    role: 'Bordeaux · Startup étudiante',
-    initial: 'E',
+    quote: 'Un travail sérieux et un vrai sens de l\'écoute. La plateforme correspond exactement à ce dont notre association avait besoin.',
+    name: 'AAED',
+    role: 'Bordeaux · Association loi 1901',
+    initial: 'AE',
   },
   {
-    quote: 'Sérieux, réactif, créatif. Notre présence digitale a été entièrement repensée et les retours sont unanimement positifs.',
-    name: 'Consulat Général du Sénégal',
-    role: 'Bordeaux · Institution officielle',
-    initial: 'C',
+    quote: 'Une plateforme pensée pour nos réalités du secteur, livrée avec rigueur et dans les délais annoncés.',
+    name: 'TMS Intérim',
+    role: 'Bordeaux · Recrutement intérim',
+    initial: 'TI',
+  },
+  {
+    quote: 'Un formulaire de devis simple et rapide, exactement ce qu\'il nous fallait pour convertir les visiteurs en clients.',
+    name: 'CLEANATIS',
+    role: 'Bordeaux · Nettoyage professionnel',
+    initial: 'CL',
   },
 ]
 
